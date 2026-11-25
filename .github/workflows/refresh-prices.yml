@@ -1,4 +1,4 @@
-# every monday: pull gcp prices from google's billing catalog api.
+# every monday: pull latest gcp prices (public file, or google's api if the key secret is set)
 # prices changed -> opens a PR (you review + merge). nothing changed -> just bumps the date on main.
 name: refresh gcp prices
 
@@ -24,7 +24,7 @@ jobs:
       - name: fetch prices
         id: fetch
         env:
-          GCP_PRICING_API_KEY: ${{ secrets.GCP_PRICING_API_KEY }}
+          GCP_PRICING_API_KEY: ${{ secrets.GCP_PRICING_API_KEY }}   # optional
         run: python -m aws2gcp refresh-prices --summary /tmp/price_changes.md
 
       - name: tests still pass with new prices

@@ -74,5 +74,42 @@ class RefreshPrices(unittest.TestCase):
         self.assertIn("gcs.standard", s)
 
 
+def inst(cpu, ram, hour):
+    return {"cpu": cpu, "ram": ram, "cost": {"asia-south1": {"hour": hour}}}
+
+
+PUBLIC = {
+    "compute": {
+        "instance": {
+            "n2-standard-2": inst(2, 8, 2 * 0.03797 + 8 * 0.005088),
+            "n2-highcpu-2": inst(2, 2, 2 * 0.03797 + 2 * 0.005088),
+            "e2-standard-2": inst(2, 8, 0.08048436),
+            "e2-highcpu-2": inst(2, 2, 0.05942004),
+        },
+        "storage": {"balanced": {"cost": {"asia-south1": {"month": 0.12}}}},
+        "network": {},
+    },
+    "storage": {"bucket": {}},
+}
+
+
+class RefreshPublic(unittest.TestCase):
+    def setUp(self):
+        self.file = Path(tempfile.mkdtemp()) / "prices.yaml"
+        shutil.copy(DATA_DIR / "prices.yaml", self.file)
+        self.changes, self.problems, self.found = rp.refresh(
+            None, self.file, public=lambda: PUBLIC, today=date(2026, 12, 1))
+
+    def test_vcpu_and_ram_solved_from_two_machines(self):
+        self.assertAlmostEqual(self.found["compute.families.n2.vcpu_hour"], 0.03797)
+        self.assertAlmostEqual(self.found["compute.families.n2.gb_hour"], 0.005088)
+        self.assertAlmostEqual(self.found["compute.families.e2.gb_hour"], 0.00351072)
+
+    def test_missing_stuff_is_a_problem_not_a_crash(self):
+        self.assertIn("compute.families.c4a.vcpu_hour", self.problems)
+        self.assertIn("gcs.standard", self.problems)
+        self.assertEqual(self.found["disk.pd_balanced"], 0.12)
+
+
 if __name__ == "__main__":
     unittest.main()

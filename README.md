@@ -21,20 +21,23 @@ Example output: examples/sample_report.md
 
 ## keeping prices up to date
 
-GCP prices are in `aws2gcp/data/prices.yaml`. They can be refreshed from google's official Cloud Billing Catalog API:
+GCP prices are in `aws2gcp/data/prices.yaml`. Refresh them live, no key needed:
 
 ```
-export GCP_PRICING_API_KEY=...   # google cloud api key, Cloud Billing API enabled
 python3 -m aws2gcp refresh-prices --dry-run   # show what would change
 python3 -m aws2gcp refresh-prices             # update prices.yaml
 ```
 
 Which google SKU fills which price is in `aws2gcp/data/price_skus.yaml`. Stuff not listed there (egress tiers, NAT, discounts) is still typed by hand.
 
-`.github/workflows/refresh-prices.yml` runs this every monday. If a price changed it opens a PR with an old -> new table, otherwise it just bumps the date. Needs the repo secret `GCP_PRICING_API_KEY`.
+Without a key it reads the public [pricing.yml](https://github.com/Cyclenerd/google-cloud-pricing-cost-calculator) which gets rebuilt weekly from google's billing api. vcpu/ram prices are worked out from 2 machine sizes (e.g. n2-standard-2 vs n2-highcpu-2). Cloud SQL isnt in that file so its still by hand.
+
+If you set `GCP_PRICING_API_KEY` (google cloud api key, Cloud Billing API on) it asks google directly instead, and cloud sql gets updated too.
+
+`.github/workflows/refresh-prices.yml` runs this every monday. If a price changed it opens a PR with an old -> new table, otherwise it just bumps the date. The api key secret is optional.
 
 ## known issues
-- compute/disk/cloud sql prices checked against google 2026-11-25, rest (egress, nat, gcs ops) still approx until the first api refresh
+- compute, disk, gcs storage, ip, nat, egress (first TB) come from the live refresh. cloud sql checked by hand 2026-11-25. discounts, gcs ops, lb, standard tier egress still approx
 - only mumbai (asia-south1) prices
 - only CUR works, not the console "download csv"
 - gpu / sql server / oracle / marketplace -> marked "needs a human"
