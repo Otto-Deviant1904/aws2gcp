@@ -7,7 +7,7 @@ from pathlib import Path
 from aws2gcp import config, pipeline, report_card
 from aws2gcp.price_tag import sud_factor
 from aws2gcp.receipt import ReceiptError
-from aws2gcp.sample import ROWS, write_sample
+from aws2gcp.sample import COLUMNS, ROWS, write_sample
 from aws2gcp.sorter import parse_instance
 from aws2gcp.twin_finder import pick_machine
 
@@ -60,6 +60,24 @@ class Receipt(unittest.TestCase):
         data = config.load_all()
         with self.assertRaisesRegex(ReceiptError, "does not look like a Cost and Usage Report"):
             pipeline.run([str(tmp)], data, data["settings"], today=TODAY)
+
+
+    def test_only_newest_delivery_of_a_month_is_read(self):
+        root = Path(tempfile.mkdtemp()) / "cur" / "Knight" / "20261101-20261201"
+        for stamp in ("20261123T172652Z", "20261124T101644Z"):
+            (root / stamp).mkdir(parents=True)
+            write_sample(root / stamp / "Knight-00001.csv")
+        once = run().totals["aws_monthly"]
+        data = config.load_all()
+        r = pipeline.run([str(root.parent.parent)], data, data["settings"], today=TODAY)
+        self.assertAlmostEqual(r.totals["aws_monthly"], once, places=2)
+
+    def test_empty_bill_does_not_crash(self):
+        tmp = Path(tempfile.mkdtemp()) / "empty.csv"
+        with open(tmp, "w", newline="") as fh:
+            csv.writer(fh).writerow(COLUMNS)
+        data = config.load_all()
+        report_card.render(pipeline.run([str(tmp)], data, data["settings"], today=TODAY))
 
 
 class Sorter(unittest.TestCase):

@@ -88,7 +88,27 @@ def find_files(paths) -> list:
             raise ReceiptError(f"File not found: {p}")
     if not files:
         raise ReceiptError("No .csv or .csv.gz files found.")
-    return files
+    return latest_delivery_only(files)
+
+
+# aws rewrites the month bill a few times: report/20261101-20261201/<timestamp or id>/file.csv.gz
+# each delivery is the full month so far, so only keep the newest one or the month gets counted 2-3x
+DELIVERY = re.compile(r"^(\d{8}T\d{6}Z|[0-9a-f-]{36})$")
+MONTH = re.compile(r"^\d{8}-\d{8}$")
+
+
+def latest_delivery_only(files):
+    newest = {}
+    for f in files:
+        if DELIVERY.match(f.parent.name) and MONTH.match(f.parent.parent.name):
+            month = f.parent.parent
+            key = (f.parent.name if f.parent.name[0:8].isdigit() and "T" in f.parent.name
+                   else str(f.parent.stat().st_mtime))
+            if month not in newest or key > newest[month][0]:
+                newest[month] = (key, f.parent)
+    keep = {d for _, d in newest.values()}
+    return [f for f in files if not (DELIVERY.match(f.parent.name) and MONTH.match(f.parent.parent.name))
+            or f.parent in keep]
 
 
 def open_text(path: Path):
@@ -155,6 +175,8 @@ def _make_line(r: dict, fx: dict, source: str) -> Line:
         effective = num(r["savingsplansavingsplaneffectivecost"]) * rate
 
     on_demand = num(r["pricingpublicondemandcost"]) * rate if r.get("pricingpublicondemandcost") else unblended
+    if on_demand < effective:  # some services leave this blank/0, dont let list price be below what you paid
+        on_demand = effective
 
     line = Line(
         line_type=line_type,

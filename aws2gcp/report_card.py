@@ -1,6 +1,7 @@
 from .config import flag_for
 
 def USD(x: float) -> str:
+    x = round(x, 2) + 0.0  # no "-$0.00"
     return f"-${-x:,.2f}" if x < 0 else f"${x:,.2f}"
 
 
