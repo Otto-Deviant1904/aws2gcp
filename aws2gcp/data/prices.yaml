@@ -1,10 +1,10 @@
-# gcp prices, usd. refresh with: python3 -m aws2gcp refresh-prices (needs GCP_PRICING_API_KEY)
-# compute/disk/cloudsql numbers checked on cloud.google.com/skus 2026-11-25, the rest are still by hand
+# gcp prices, usd. refresh with: python3 -m aws2gcp refresh-prices (no key needed)
+# compute/disk/gcs/ip/nat/egress from the live refresh, cloudsql checked by hand 2026-11-25, rest still by hand
 meta:
   region: asia-south1          # Mumbai
   currency: USD
   snapshot_date: 2026-11-25
-  verified: false
+  verified: true
 
 compute:
   custom_premium: 0.05         # custom machine shapes cost ~5% more than predefined
@@ -48,12 +48,12 @@ disk:                          # per GB per month
   pd_balanced: 0.12
   pd_ssd: 0.204
   pd_standard: 0.048
-  snapshot: 0.029
+  snapshot: 0.052
 
 gcs:                           # Cloud Storage, per GB per month
   standard: 0.023
   nearline: 0.016
-  coldline: 0.007
+  coldline: 0.006
   archive: 0.0025
   class_a_per_1000: 0.005      # writes/lists (like S3 Tier1)
   class_b_per_1000: 0.0004     # reads (like S3 Tier2)
@@ -72,7 +72,7 @@ network:
   egress_standard_gb: 0.085    # Standard tier, approx
   inter_zone_gb: 0.01
   nat_per_vm_hour: 0.0014
-  nat_gateway_hour_cap: 0.044
+  nat_gateway_hour_cap: 0.0448
   nat_gb: 0.045
   ipv4_hour: 0.005
   lb_rule_hour: 0.025
