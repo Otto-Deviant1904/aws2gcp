@@ -23,7 +23,7 @@ def run(paths, data: dict, settings: dict, today: date | None = None) -> Result:
 
     rec = receipt_mod.read_receipt(paths, settings)
     warnings += rec.warnings
-    lines = rec.workload()
+    lines = rec.usage()
 
     sorter.sort_lines(lines, data)
 

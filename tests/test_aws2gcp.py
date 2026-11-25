@@ -44,7 +44,7 @@ class Receipt(unittest.TestCase):
     def test_reserved_instance_uses_effective_cost(self):
         self.assertAlmostEqual(line(run(), "APS3-BoxUsage:c5.xlarge").effective, 85.0)
 
-    def test_tax_credit_fee_kept_out_of_workload(self):
+    def test_tax_credit_fee_kept_out_of_usage(self):
         kinds = {l.line_type for l in run().lines}
         self.assertFalse(kinds & {"Tax", "Credit", "Refund", "Fee", "RIFee", "SavingsPlanNegation"})
 

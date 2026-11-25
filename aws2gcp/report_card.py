@@ -27,9 +27,6 @@ def render(result) -> str:
             f"verified: {result.prices_meta.get('verified', False)}. All amounts USD per standard 730-hour month, "
             "tax excluded.", ""]
 
-    if result.warnings:
-        out += ["## Warnings", ""] + [f"- {w}" for w in result.warnings] + [""]
-
     aws = t["aws_compare"]
     save_likely = aws - t["gcp_likely"]
     be_likely = break_even(mig["likely"], aws, t["gcp_likely"])
@@ -99,7 +96,7 @@ def render(result) -> str:
 
     out += ["## Money not in the comparison", "", "| Bucket | Per month | Meaning |", "|---|---:|---|"]
     meaning = {
-        "workload": "usage that was compared above (row cost, before RI/SP effective cost)",
+        "usage": "usage that was compared above (row cost, before RI/SP effective cost)",
         "tax": "GST / tax; GCP charges tax too, so it is left out",
         "credit": "promotional credits",
         "refund": "refunds",
@@ -132,7 +129,7 @@ def _flatten(d, prefix=()):
 def explain(result, match: str) -> str:
     hits = [l for l in result.lines if match.lower() in (l.usage_type + " " + l.resource_id).lower()]
     if not hits:
-        return f"No workload line contains '{match}'."
+        return f"No usage line contains '{match}'."
     out = []
     for l in hits:
         out += [f"== {l.source}  {l.product}  {l.usage_type}  {l.resource_id}",

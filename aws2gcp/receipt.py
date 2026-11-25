@@ -8,9 +8,9 @@ from pathlib import Path
 from .models import Line
 
 BUCKET_OF_TYPE = {
-    "Usage": "workload",
-    "DiscountedUsage": "workload",
-    "SavingsPlanCoveredUsage": "workload",
+    "Usage": "usage",
+    "DiscountedUsage": "usage",
+    "SavingsPlanCoveredUsage": "usage",
     "Tax": "tax",
     "Credit": "credit",
     "Refund": "refund",
@@ -43,8 +43,8 @@ class Receipt:
     periods: dict
     warnings: list = field(default_factory=list)
 
-    def workload(self) -> list:
-        return [l for l in self.lines if l.bucket == "workload"]
+    def usage(self) -> list:
+        return [l for l in self.lines if l.bucket == "usage"]
 
     def bucket_totals(self) -> dict:
         totals = {}
@@ -96,7 +96,7 @@ def find_files(paths) -> list:
 DELIVERY = re.compile(r"^(\d{8}T\d{6}Z|[0-9a-f-]{36})$")
 MONTH = re.compile(r"^\d{8}-\d{8}$")
 
-
+#only keep the newest deliveryfolder per month
 def latest_delivery_only(files):
     newest = {}
     for f in files:
@@ -144,7 +144,7 @@ def read_receipt(paths, settings: dict) -> Receipt:
                     "last_usage": None,
                 })
                 # only real usage rows. tax rows end on the last day of month even if month not done
-                if line.bucket != "workload":
+                if line.bucket != "usage":
                     continue
                 usage_end = when(r.get("lineitemusageenddate", ""))
                 if usage_end and (p["last_usage"] is None or usage_end > p["last_usage"]):
