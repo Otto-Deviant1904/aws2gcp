@@ -1,0 +1,43 @@
+# usagetype regex -> kind. prefix (APS3-) stripped first. first match wins
+rules:
+  # --- compute ---
+  - {match: '^(BoxUsage|DedicatedUsage|HostBoxUsage):(?P<itype>.+)$', kind: vm}
+  - {match: '^SpotUsage:(?P<itype>.+)$', kind: vm, spot: true}
+  - {match: '^CPUCredits:', kind: vm_cpu_credits}
+
+  # --- disks ---
+  - {match: '^EBS:VolumeUsage(\.(?P<vol>\w+))?$', kind: disk}
+  - {match: '^EBS:(VolumeP-IOPS|VolumeP-Throughput|VolumeIOUsage)', kind: disk_perf}
+  - {match: '^EBS:SnapshotUsage', kind: snapshot}
+
+  # --- network ---
+  - {match: '^NatGateway-Hours$', kind: nat_hours}
+  - {match: '^NatGateway-Bytes$', kind: nat_bytes}
+  - {match: '^(PublicIPv4:|ElasticIP:)', kind: ipv4}
+  - {match: '^LoadBalancerUsage$', kind: lb_hours}
+  - {match: 'LCUUsage$', kind: lb_lcu}
+  - {match: '^DataProcessing-Bytes$', product: '^AWSELB$', kind: lb_bytes}
+  - {match: '^DataTransfer-Out-Bytes$', kind: egress_internet}
+  - {match: '^DataTransfer-Regional-Bytes$', kind: inter_zone}
+  - {match: '^DataTransfer-In-Bytes$', kind: ingress}
+  - {match: 'AWS-(Out|In)-Bytes$', kind: inter_region}
+
+  # --- S3 ---
+  - {match: '^TimedStorage-(?P<s3class>.*?)-?ByteHrs$', product: '^AmazonS3$', kind: s3_storage}
+  - {match: '^Requests-Tier1$', product: '^AmazonS3$', kind: s3_requests, tier: class_a}
+  - {match: '^Requests-', product: '^AmazonS3$', kind: s3_requests, tier: class_b}
+  - {match: 'Retrieval', product: '^AmazonS3$', kind: s3_retrieval}
+
+  # --- databases (RDS / Aurora) ---
+  - {match: '^(?P<az>Multi-AZUsage|InstanceUsage)\w*:db\.(?P<itype>.+)$', product: '^AmazonRDS$', kind: db_instance}
+  - {match: 'RDS:(?P<multiaz>Multi-AZ-)?\w+-Storage$', product: '^AmazonRDS$', kind: db_storage}
+  - {match: '^Aurora:StorageUsage$', product: '^AmazonRDS$', kind: db_storage}
+  - {match: 'StorageIOUsage$', product: '^AmazonRDS$', kind: db_io}
+  - {match: 'BackupUsage$', product: '^AmazonRDS$', kind: db_backup}
+
+  # --- kubernetes ---
+  - {match: '^AmazonEKS-Hours:perCluster', kind: k8s_cluster}
+  - {match: '^AmazonEKS-Hours:extendedSupport', kind: k8s_extended_support}
+
+  # --- DNS ---
+  - {match: '^HostedZone$', product: '^AmazonRoute53$', kind: dns_zone}

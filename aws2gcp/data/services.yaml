@@ -1,0 +1,48 @@
+# simple aws -> gcp lookups
+ebs_to_pd:                 # EBS volume type -> GCP Persistent Disk type
+  gp2: pd_balanced
+  gp3: pd_balanced
+  io1: pd_ssd
+  io2: pd_ssd
+  st1: pd_standard
+  sc1: pd_standard
+  standard: pd_standard    # old "magnetic" volumes
+
+s3_to_gcs:                 # S3 storage class code (from UsageType) -> GCS class
+  '': standard             # TimedStorage-ByteHrs = S3 Standard
+  INT-FA: standard         # Intelligent-Tiering frequent access
+  SIA: nearline            # Standard-IA
+  ZIA: nearline            # One Zone-IA
+  INT-IA: nearline
+  GIR: coldline            # Glacier Instant Retrieval
+  INT-AIA: coldline
+  Glacier: coldline        # Glacier Flexible Retrieval
+  GDA: archive             # Glacier Deep Archive
+  INT-AA: archive
+  INT-DAA: archive
+
+managed:                   # AWS service -> nearest GCP service.
+                           # cant convert these from the bill, just copy aws cost
+  AWSLambda: Cloud Run functions
+  AmazonSQS: Pub/Sub
+  AmazonSNS: Pub/Sub
+  AmazonDynamoDB: Firestore or Bigtable
+  AmazonCloudWatch: Cloud Logging + Cloud Monitoring
+  AWSKMS: Cloud KMS
+  AWSSecretsManager: Secret Manager
+  AmazonCloudFront: Cloud CDN
+  AmazonECS: Cloud Run
+  AmazonECR: Artifact Registry
+  AmazonApiGateway: API Gateway
+  AWSCloudTrail: Cloud Audit Logs
+  AmazonRoute53: Cloud DNS
+  AmazonEFS: Filestore
+  AmazonElastiCache: Memorystore
+  AWSELB: Cloud Load Balancing
+  AmazonEKS: GKE
+
+support_products:          # AWS support plans
+  - AWSSupportBusiness
+  - AWSSupportEnterprise
+  - AWSSupportEnterpriseOnRamp
+  - AWSDeveloperSupport

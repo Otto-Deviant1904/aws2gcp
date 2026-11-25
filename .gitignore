@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+notes/
+# real bills, never commit
+*.csv.gz
+*.parquet
+cur/
+reports/
+report.md

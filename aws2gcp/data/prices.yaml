@@ -1,0 +1,84 @@
+# gcp prices asia-south1, usd. NOT verified yet - check cloud.google.com/pricing
+meta:
+  region: asia-south1          # Mumbai
+  currency: USD
+  snapshot_date: 2026-11-23
+  verified: false
+
+compute:
+  custom_premium: 0.05         # custom machine shapes cost ~5% more than predefined
+  windows_license_vcpu_hour: 0.046
+  spot_discount: {low: 0.60, likely: 0.70, high: 0.91}   # share taken OFF on-demand
+  cud_discount: {1y: 0.37, 3y: 0.55}                     # committed-use discount
+  # sud n2 only, full month ~80%
+  sud_tiers_n2:
+    - {from: 0.00, to: 0.25, rate: 1.0}
+    - {from: 0.25, to: 0.50, rate: 0.8679}
+    - {from: 0.50, to: 0.75, rate: 0.7358}
+    - {from: 0.75, to: 1.00, rate: 0.6038}
+  shared_core:                 # E2 small machines bill a fraction of a vCPU
+    e2-micro:  {vcpu: 0.25, ram_gb: 1}
+    e2-small:  {vcpu: 0.5,  ram_gb: 2}
+    e2-medium: {vcpu: 1.0,  ram_gb: 4}
+  families:
+    e2:                        # cheap general purpose, x86
+      vcpu_hour: 0.0240
+      gb_hour: 0.0032
+      sud: false
+      custom: true
+      ratios: {highcpu: 1, standard: 4, highmem: 8}   # GB of RAM per vCPU
+      sizes: [2, 4, 8, 16, 32]
+    n2:                        # general purpose, x86, steady performance
+      vcpu_hour: 0.0348
+      gb_hour: 0.0047
+      sud: true
+      custom: true
+      ratios: {highcpu: 1, standard: 4, highmem: 8}
+      sizes: [2, 4, 8, 16, 32, 48, 64, 80, 96, 128]
+    c4a:                       # Google Axion, ARM (twin for AWS Graviton)
+      vcpu_hour: 0.0330
+      gb_hour: 0.0037
+      sud: false
+      custom: false
+      ratios: {highcpu: 2, standard: 4, highmem: 8}
+      sizes: [1, 2, 4, 8, 16, 32, 48, 64, 72]
+
+disk:                          # per GB per month
+  pd_balanced: 0.110
+  pd_ssd: 0.187
+  pd_standard: 0.044
+  snapshot: 0.029
+
+gcs:                           # Cloud Storage, per GB per month
+  standard: 0.023
+  nearline: 0.016
+  coldline: 0.007
+  archive: 0.0025
+  class_a_per_1000: 0.005      # writes/lists (like S3 Tier1)
+  class_b_per_1000: 0.0004     # reads (like S3 Tier2)
+  retrieval_gb: 0.02           # typical cold-class read fee
+
+cloudsql:                      # Cloud SQL Enterprise edition
+  vcpu_hour: 0.0454
+  gb_hour: 0.0077
+  ha_multiplier: 2             # high availability = a second standby copy
+  ssd_gb_month: 0.187
+  backup_gb_month: 0.088
+  cud_discount: {1y: 0.25, 3y: 0.52}
+
+network:
+  egress_premium_gb: 0.12      # internet egress, Premium tier, first TB, approx
+  egress_standard_gb: 0.085    # Standard tier, approx
+  inter_zone_gb: 0.01
+  nat_per_vm_hour: 0.0014
+  nat_gateway_hour_cap: 0.044
+  nat_gb: 0.045
+  ipv4_hour: 0.005
+  lb_rule_hour: 0.025
+  lb_gb: 0.008
+
+gke:
+  cluster_hour: 0.10
+
+dns:
+  zone_month: 0.20

@@ -1,0 +1,35 @@
+prefix_to_aws_region:
+  APS3: ap-south-1         # Mumbai
+  APS5: ap-south-2         # Hyderabad
+  APS1: ap-southeast-1     # Singapore
+  APS2: ap-southeast-2     # Sydney
+  APN1: ap-northeast-1     # Tokyo
+  APN2: ap-northeast-2     # Seoul
+  USE1: us-east-1
+  USE2: us-east-2
+  USW1: us-west-1
+  USW2: us-west-2
+  EU: eu-west-1
+  EUW2: eu-west-2
+  EUW3: eu-west-3
+  EUC1: eu-central-1
+  CAN1: ca-central-1
+  SAE1: sa-east-1
+
+aws_to_gcp_region:
+  ap-south-1: asia-south1
+  ap-south-2: asia-south2
+  ap-southeast-1: asia-southeast1
+  ap-southeast-2: australia-southeast1
+  ap-northeast-1: asia-northeast1
+  ap-northeast-2: asia-northeast3
+  us-east-1: us-east4
+  us-east-2: us-east5
+  us-west-1: us-west2
+  us-west-2: us-west1
+  eu-west-1: europe-west1
+  eu-west-2: europe-west2
+  eu-west-3: europe-west9
+  eu-central-1: europe-west3
+  ca-central-1: northamerica-northeast1
+  sa-east-1: southamerica-east1

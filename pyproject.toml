@@ -1,0 +1,16 @@
+[project]
+name = "aws2gcp"
+version = "0.1.0"
+description = "aws bill (CUR) -> gcp cost estimate + migration cost"
+requires-python = ">=3.10"
+dependencies = ["PyYAML>=6"]
+
+[project.scripts]
+aws2gcp = "aws2gcp.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-data]
+aws2gcp = ["data/*.yaml"]
