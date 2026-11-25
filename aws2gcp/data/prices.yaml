@@ -1,8 +1,9 @@
-# gcp prices asia-south1, usd. NOT verified yet - check cloud.google.com/pricing
+# gcp prices, usd. refresh with: python3 -m aws2gcp refresh-prices (needs GCP_PRICING_API_KEY)
+# compute/disk/cloudsql numbers checked on cloud.google.com/skus 2026-11-25, the rest are still by hand
 meta:
   region: asia-south1          # Mumbai
   currency: USD
-  snapshot_date: 2026-11-23
+  snapshot_date: 2026-11-25
   verified: false
 
 compute:
@@ -22,31 +23,31 @@ compute:
     e2-medium: {vcpu: 1.0,  ram_gb: 4}
   families:
     e2:                        # cheap general purpose, x86
-      vcpu_hour: 0.0240
-      gb_hour: 0.0032
+      vcpu_hour: 0.0261993
+      gb_hour: 0.00351072
       sud: false
       custom: true
       ratios: {highcpu: 1, standard: 4, highmem: 8}   # GB of RAM per vCPU
       sizes: [2, 4, 8, 16, 32]
     n2:                        # general purpose, x86, steady performance
-      vcpu_hour: 0.0348
-      gb_hour: 0.0047
+      vcpu_hour: 0.03797
+      gb_hour: 0.005088
       sud: true
       custom: true
       ratios: {highcpu: 1, standard: 4, highmem: 8}
       sizes: [2, 4, 8, 16, 32, 48, 64, 80, 96, 128]
     c4a:                       # Google Axion, ARM (twin for AWS Graviton)
-      vcpu_hour: 0.0330
-      gb_hour: 0.0037
+      vcpu_hour: 0.032094
+      gb_hour: 0.00365
       sud: false
       custom: false
       ratios: {highcpu: 2, standard: 4, highmem: 8}
       sizes: [1, 2, 4, 8, 16, 32, 48, 64, 72]
 
 disk:                          # per GB per month
-  pd_balanced: 0.110
-  pd_ssd: 0.187
-  pd_standard: 0.044
+  pd_balanced: 0.12
+  pd_ssd: 0.204
+  pd_standard: 0.048
   snapshot: 0.029
 
 gcs:                           # Cloud Storage, per GB per month
@@ -59,8 +60,8 @@ gcs:                           # Cloud Storage, per GB per month
   retrieval_gb: 0.02           # typical cold-class read fee
 
 cloudsql:                      # Cloud SQL Enterprise edition
-  vcpu_hour: 0.0454
-  gb_hour: 0.0077
+  vcpu_hour: 0.0496
+  gb_hour: 0.0084
   ha_multiplier: 2             # high availability = a second standby copy
   ssd_gb_month: 0.187
   backup_gb_month: 0.088

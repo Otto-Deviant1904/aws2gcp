@@ -1,0 +1,51 @@
+# every monday: pull gcp prices from google's billing catalog api.
+# prices changed -> opens a PR (you review + merge). nothing changed -> just bumps the date on main.
+name: refresh gcp prices
+
+on:
+  schedule:
+    - cron: "0 3 * * 1"   # monday 03:00 UTC
+  workflow_dispatch:       # "run workflow" button in the actions tab
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+
+      - name: fetch prices
+        id: fetch
+        env:
+          GCP_PRICING_API_KEY: ${{ secrets.GCP_PRICING_API_KEY }}
+        run: python -m aws2gcp refresh-prices --summary /tmp/price_changes.md
+
+      - name: tests still pass with new prices
+        run: python -m unittest discover -s tests -t .
+
+      - name: open PR (prices changed) or bump date (no change)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet; then echo "nothing to do"; exit 0; fi
+          day=$(date +%F)
+          if [ "${{ steps.fetch.outputs.changed }}" = "0" ]; then
+            git commit -am "prices checked $day, no change"
+            git push origin HEAD:main
+            exit 0
+          fi
+          branch="prices/$day"
+          git checkout -b "$branch"
+          git commit -am "gcp prices refresh $day"
+          git push -f origin "$branch"
+          gh pr create --base main --head "$branch" --title "GCP prices $day" --body-file /tmp/price_changes.md \
+            || gh pr edit "$branch" --body-file /tmp/price_changes.md

@@ -1,0 +1,33 @@
+# which google sku fills which price in prices.yaml (used by: aws2gcp refresh-prices)
+# sku = regex on the sku description. region is checked separately (serviceRegions), so dont put it in the regex
+# only on-demand skus are used. anything not listed here is still typed by hand in prices.yaml
+
+services:          # displayName in the google catalog api
+  compute: Compute Engine
+  sql: Cloud SQL
+  storage: Cloud Storage
+
+prices:
+  compute.families.e2.vcpu_hour:  {service: compute, sku: '^E2 Instance Core running in '}
+  compute.families.e2.gb_hour:    {service: compute, sku: '^E2 Instance Ram running in '}
+  compute.families.n2.vcpu_hour:  {service: compute, sku: '^N2 Instance Core running in '}
+  compute.families.n2.gb_hour:    {service: compute, sku: '^N2 Instance Ram running in '}
+  compute.families.c4a.vcpu_hour: {service: compute, sku: '^C4A Arm Instance Core running in '}
+  compute.families.c4a.gb_hour:   {service: compute, sku: '^C4A Arm Instance Ram running in '}
+
+  disk.pd_balanced: {service: compute, sku: '^Balanced PD Capacity in '}
+  disk.pd_ssd:      {service: compute, sku: '^SSD backed PD Capacity in '}
+  disk.pd_standard: {service: compute, sku: '^Storage PD Capacity in '}
+  disk.snapshot:    {service: compute, sku: '^Storage PD Snapshot in '}
+
+  gcs.standard: {service: storage, sku: '^Standard Storage [A-Za-z ]+$'}
+  gcs.nearline: {service: storage, sku: '^Nearline Storage [A-Za-z ]+$'}
+  gcs.coldline: {service: storage, sku: '^Coldline Storage [A-Za-z ]+$'}
+  gcs.archive:  {service: storage, sku: '^Archive Storage [A-Za-z ]+$'}
+
+  # postgres and mysql cost the same, so just use postgres
+  cloudsql.vcpu_hour:    {service: sql, sku: '^Cloud SQL for PostgreSQL: Zonal - vCPU in '}
+  cloudsql.gb_hour:      {service: sql, sku: '^Cloud SQL for PostgreSQL: Zonal - RAM in '}
+  cloudsql.ssd_gb_month: {service: sql, sku: '^Cloud SQL for PostgreSQL: Zonal - Standard storage in '}
+
+  network.ipv4_hour: {service: compute, sku: '^External IP Charge on a Standard VM'}

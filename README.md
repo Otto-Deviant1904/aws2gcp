@@ -19,8 +19,22 @@ Steps: receipt.py -> sorter.py -> twin_finder.py -> price_tag.py -> moving_truck
 
 Example output: examples/sample_report.md
 
+## keeping prices up to date
+
+GCP prices are in `aws2gcp/data/prices.yaml`. They can be refreshed from google's official Cloud Billing Catalog API:
+
+```
+export GCP_PRICING_API_KEY=...   # google cloud api key, Cloud Billing API enabled
+python3 -m aws2gcp refresh-prices --dry-run   # show what would change
+python3 -m aws2gcp refresh-prices             # update prices.yaml
+```
+
+Which google SKU fills which price is in `aws2gcp/data/price_skus.yaml`. Stuff not listed there (egress tiers, NAT, discounts) is still typed by hand.
+
+`.github/workflows/refresh-prices.yml` runs this every monday. If a price changed it opens a PR with an old -> new table, otherwise it just bumps the date. Needs the repo secret `GCP_PRICING_API_KEY`.
+
 ## known issues
-- gcp prices are approx, not verified yet
+- compute/disk/cloud sql prices checked against google 2026-11-25, rest (egress, nat, gcs ops) still approx until the first api refresh
 - only mumbai (asia-south1) prices
 - only CUR works, not the console "download csv"
 - gpu / sql server / oracle / marketplace -> marked "needs a human"

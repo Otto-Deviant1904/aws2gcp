@@ -154,7 +154,8 @@ class PriceTag(unittest.TestCase):
 
     def test_e2_gets_no_sud(self):
         l = line(run(), "APS3-BoxUsage:t3.medium")
-        self.assertAlmostEqual(l.gcp_likely, (1 * 0.024 + 4 * 0.0032) * 730, places=2)
+        e2 = config.load_all()["prices"]["compute"]["families"]["e2"]
+        self.assertAlmostEqual(l.gcp_likely, (1 * e2["vcpu_hour"] + 4 * e2["gb_hour"]) * 730, places=2)
 
     def test_spot_has_its_own_wide_range(self):
         l = line(run(), "APS3-SpotUsage:m5.xlarge")

@@ -1,0 +1,158 @@
+import json
+import os
+import re
+import urllib.parse
+import urllib.request
+from datetime import date
+from pathlib import Path
+
+import yaml
+
+from .config import DATA_DIR
+
+API = "https://cloudbilling.googleapis.com/v1"
+
+
+def fetch_json(url, key):
+    sep = "&" if "?" in url else "?"
+    with urllib.request.urlopen(f"{url}{sep}key={urllib.parse.quote(key)}", timeout=60) as r:
+        return json.load(r)
+
+
+def _pages(url, field, key, fetch):
+    token = ""
+    while True:
+        page = fetch(url + (f"&pageToken={token}" if token else ""), key)
+        yield from page.get(field, [])
+        token = page.get("nextPageToken")
+        if not token:
+            return
+
+
+def load_catalog(wanted_services, key, fetch=fetch_json):
+    """returns {short name: [sku, ...]} straight from google"""
+    services = {s["displayName"]: s["name"] for s in _pages(f"{API}/services?pageSize=5000", "services", key, fetch)}
+    out = {}
+    for short, display in wanted_services.items():
+        if display not in services:
+            raise RuntimeError(f"service '{display}' not in google catalog")
+        out[short] = list(_pages(f"{API}/{services[display]}/skus?currencyCode=USD&pageSize=5000", "skus", key, fetch))
+    return out
+
+
+def unit_price(sku):
+    # last pricingInfo = current price. tiers: take first one that isnt free (some have a free first tier)
+    rates = sku["pricingInfo"][-1]["pricingExpression"]["tieredRates"]
+    for r in rates:
+        p = int(r["unitPrice"].get("units", 0) or 0) + r["unitPrice"].get("nanos", 0) / 1e9
+        if p > 0:
+            return p
+    return 0.0
+
+
+def match_prices(catalog, mapping, region):
+    """returns (found {path: price}, problems {path: why})"""
+    found, problems = {}, {}
+    for path, m in mapping.items():
+        pat = re.compile(m["sku"])
+        hits = [s for s in catalog.get(m["service"], [])
+                if pat.search(s["description"]) and s.get("category", {}).get("usageType") == "OnDemand"]
+        regional = [s for s in hits if region in s.get("serviceRegions", [])]
+        hits = regional or [s for s in hits if "global" in s.get("serviceRegions", [])]
+        prices = sorted({round(unit_price(s), 8) for s in hits})
+        if not prices:
+            problems[path] = f"no sku matched /{m['sku']}/ in {region}"
+        elif len(prices) > 1:
+            problems[path] = f"{len(hits)} skus matched with different prices {prices}, fix the regex"
+        else:
+            found[path] = prices[0]
+    return found, problems
+
+
+def rewrite_yaml(text, updates):
+    """change numbers in prices.yaml in place so comments and layout stay the same"""
+    out, stack = [], []
+    for line in text.splitlines(keepends=True):
+        m = re.match(r"^(\s*)([\w-]+):(\s*)(.*?)(\s*#.*)?$", line.rstrip("\n"))
+        if not m or line.lstrip().startswith("#"):
+            out.append(line)
+            continue
+        indent = len(m.group(1))
+        while stack and stack[-1][0] >= indent:
+            stack.pop()
+        stack.append((indent, m.group(2)))
+        path = ".".join(k for _, k in stack)
+        if path in updates and m.group(4):
+            line = f"{m.group(1)}{m.group(2)}:{m.group(3) or ' '}{updates[path]:.10g}{m.group(5) or ''}\n"
+        out.append(line)
+    return "".join(out)
+
+
+def get(d, path):
+    for k in path.split("."):
+        d = d[k]
+    return d
+
+
+def refresh(key, prices_file=None, mapping_file=None, region=None, fetch=fetch_json, today=None, write=True):
+    prices_file = Path(prices_file or DATA_DIR / "prices.yaml")
+    mapping = yaml.safe_load(Path(mapping_file or DATA_DIR / "price_skus.yaml").read_text())
+    text = prices_file.read_text()
+    old = yaml.safe_load(text)
+    region = region or old["meta"]["region"]
+
+    catalog = load_catalog(mapping["services"], key, fetch)
+    found, problems = match_prices(catalog, mapping["prices"], region)
+
+    changes = []
+    for path, new in sorted(found.items()):
+        before = get(old, path)
+        if abs(new - before) > 1e-9:
+            changes.append((path, before, new))
+
+    text = rewrite_yaml(text, found)
+    text = re.sub(r"(?m)^(  snapshot_date:\s*)\S+", rf"\g<1>{(today or date.today()).isoformat()}", text)
+    text = re.sub(r"(?m)^(  verified:\s*)\S+", rf"\g<1>{'true' if not problems else 'false'}", text)
+    text = re.sub(r"(?m)^(  region:\s*)\S+", rf"\g<1>{region}", text)
+    if write:
+        prices_file.write_text(text)
+    return changes, problems, found
+
+
+def summary(changes, problems, found, region):
+    lines = [f"# GCP price refresh ({region})", "",
+             f"{len(found)} prices checked against the Cloud Billing Catalog API, {len(changes)} changed.", ""]
+    if changes:
+        lines += ["| price | old | new | change |", "|---|---:|---:|---:|"]
+        for path, a, b in changes:
+            pct = (b - a) / a if a else 0
+            flag = " **check this**" if abs(pct) > 0.3 else ""
+            lines.append(f"| `{path}` | {a:g} | {b:g} | {pct:+.1%}{flag} |")
+        lines.append("")
+    if problems:
+        lines += ["Not updated (kept the old number):", ""] + [f"- `{p}`: {why}" for p, why in problems.items()] + [""]
+    lines.append("Everything not in data/price_skus.yaml (egress, NAT, discounts...) is still typed by hand.")
+    return "\n".join(lines)
+
+
+def main(args):
+    key = os.environ.get("GCP_PRICING_API_KEY")
+    if not key:
+        print("error: set GCP_PRICING_API_KEY (a google cloud api key with the Cloud Billing API enabled)")
+        return 2
+    region = args.region or yaml.safe_load(Path(args.prices or DATA_DIR / "prices.yaml").read_text())["meta"]["region"]
+    try:
+        changes, problems, found = refresh(key, args.prices, region=region, write=not args.dry_run)
+    except Exception as e:  # bad key, api down etc
+        hint = " (api key wrong, or Cloud Billing API not enabled for it)" if "400" in str(e) or "403" in str(e) else ""
+        print(f"error: {e}{hint}")
+        return 1
+    text = summary(changes, problems, found, region)
+    print(text)
+    if args.summary:
+        Path(args.summary).write_text(text)
+    gh_out = os.environ.get("GITHUB_OUTPUT")
+    if gh_out:
+        with open(gh_out, "a") as fh:
+            fh.write(f"changed={len(changes)}\nproblems={len(problems)}\n")
+    return 0

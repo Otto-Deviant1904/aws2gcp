@@ -33,7 +33,16 @@ def main(argv=None) -> int:
     exp.add_argument("--match", required=True, help="text in the UsageType or resource id")
     smp = sub.add_parser("sample", help="write a fake CUR file to try the tool")
     smp.add_argument("out")
+    ref = sub.add_parser("refresh-prices", help="update prices.yaml from google's billing catalog api")
+    ref.add_argument("--prices", help="prices.yaml to update (default: the built-in one)")
+    ref.add_argument("--region", help="gcp region, e.g. asia-south1 (default: the one in prices.yaml)")
+    ref.add_argument("--dry-run", action="store_true", help="show changes, dont write")
+    ref.add_argument("--summary", help="also write the change table to this markdown file")
     args = ap.parse_args(argv)
+
+    if args.cmd == "refresh-prices":
+        from . import refresh_prices
+        return refresh_prices.main(args)
 
     if args.cmd == "sample":
         write_sample(args.out)
