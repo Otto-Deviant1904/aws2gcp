@@ -1,5 +1,6 @@
 import argparse
 import sys
+from pathlib import Path
 
 from . import config, pipeline, report_card
 from .receipt import ReceiptError
@@ -50,6 +51,7 @@ def main(argv=None) -> int:
 
     text = report_card.render(result) if args.cmd == "convert" else report_card.explain(result, args.match)
     if getattr(args, "out", None):
+        Path(args.out).parent.mkdir(parents=True, exist_ok=True)
         with open(args.out, "w", encoding="utf-8") as fh:
             fh.write(text)
         print(f"Report written to {args.out}")

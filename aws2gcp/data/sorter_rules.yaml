@@ -4,6 +4,10 @@ rules:
   - {match: '^(BoxUsage|DedicatedUsage|HostBoxUsage):(?P<itype>.+)$', kind: vm}
   - {match: '^SpotUsage:(?P<itype>.+)$', kind: vm, spot: true}
   - {match: '^CPUCredits:', kind: vm_cpu_credits}
+  # lightsail (bundle = vm + disk + ip + some transfer)
+  - {match: '^BundleUsage:(?P<bundle>[\d.]+)GB$', product: 'AmazonLightsail', kind: lightsail_vm}
+  - {match: '^SnapshotUsage$', product: 'AmazonLightsail', kind: snapshot}
+  - {match: '^ContainerSvcUsage:', product: 'AmazonLightsail', kind: lightsail_container}
 
   # --- disks ---
   - {match: '^EBS:VolumeUsage(\.(?P<vol>\w+))?$', kind: disk}

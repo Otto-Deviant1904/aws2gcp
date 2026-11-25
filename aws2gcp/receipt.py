@@ -123,6 +123,9 @@ def read_receipt(paths, settings: dict) -> Receipt:
                     "end": when(r["billbillingperiodenddate"]),
                     "last_usage": None,
                 })
+                # only real usage rows. tax rows end on the last day of month even if month not done
+                if line.bucket != "workload":
+                    continue
                 usage_end = when(r.get("lineitemusageenddate", ""))
                 if usage_end and (p["last_usage"] is None or usage_end > p["last_usage"]):
                     p["last_usage"] = usage_end

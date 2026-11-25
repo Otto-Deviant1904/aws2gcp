@@ -44,7 +44,12 @@ def _price_one(line, prices, settings):
                            + (f" / {a['per']}" if a.get("per", 1) != 1 else ""))
         return cost
     if rule == "vm":
-        return _price_vm(line, prices, settings)
+        cost = _price_vm(line, prices, settings)
+        extra = a.get("extra_monthly", 0)
+        if extra:
+            line.note("price", f"+ ${extra:.2f} disk/ip")
+            cost = tuple(c + extra for c in cost) if isinstance(cost, tuple) else cost + extra
+        return cost
     if rule == "cloudsql":
         return _price_cloudsql(line, prices, settings)
     if rule == "nat":

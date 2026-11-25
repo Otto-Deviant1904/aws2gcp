@@ -22,9 +22,11 @@ def estimate(lines: list, receipt, totals: dict, settings: dict) -> dict:
     lab = mig["labor"]
     resources = {}
     for l in lines:
+        if l.monthly_aws < 0.01:  # free stuff (few s3 requests etc) isnt real work
+            continue
         if l.group in lab["hours_per_resource"] and l.confidence != "human":
             resources.setdefault(l.group, set()).add(l.resource_id or l.usage_type)
-    human_items = {(l.product, l.usage_type) for l in lines if l.confidence == "human"}
+    human_items = {(l.product, l.usage_type) for l in lines if l.confidence == "human" and l.monthly_aws >= 0.01}
     hours = lab["base_project_hours"]
     detail = [f"base {lab['base_project_hours']} h"]
     for group, ids in sorted(resources.items()):

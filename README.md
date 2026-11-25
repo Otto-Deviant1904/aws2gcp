@@ -24,4 +24,4 @@ Example output: examples/sample_report.md
 - only mumbai (asia-south1) prices
 - only CUR works, not the console "download csv"
 - gpu / sql server / oracle / marketplace -> marked "needs a human"
-- not tested on a real CUR yet
+- only tested on one small real CUR (mostly lightsail), no big EC2/RDS bill yet

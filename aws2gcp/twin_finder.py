@@ -263,6 +263,36 @@ def _vm_cpu_credits(line, data, ctx):
     _set(line, "no CPU credit fee on GCP", "close", "zero")
 
 
+# lightsail bundles by RAM GB -> (vcpu, disk GB). linux bundles only
+LIGHTSAIL = {0.5: (2, 20), 1: (2, 40), 2: (2, 60), 4: (2, 80), 8: (2, 160), 16: (4, 320), 32: (8, 640), 64: (16, 1280)}
+
+
+def _lightsail_vm(line, data, ctx):
+    ram = float(line.details.get("bundle", 0))
+    if ram not in LIGHTSAIL:
+        return _human(line, why=f"unknown lightsail bundle {ram}GB")
+    vcpu, disk = LIGHTSAIL[ram]
+    prices = data["prices"]
+    if ram <= 4:
+        name = "e2-micro" if ram <= 1 else "e2-small" if ram <= 2 else "e2-medium"
+        sc = prices["compute"]["shared_core"][name]
+        mvcpu, mram, custom = sc["vcpu"], sc["ram_gb"], False
+    else:
+        name, mvcpu, mram, custom, _ = pick_machine("e2", vcpu, ram, prices)
+    hours = line.monthly_quantity
+    # disk price is per month, so only pay for the hours it existed
+    extra = hours * (disk * prices["disk"]["pd_balanced"] / data["settings"]["hours_per_month"] + prices["network"]["ipv4_hour"])
+    line.note("twin", f"lightsail {ram:g}GB bundle = {vcpu} burst vCPU + {disk}GB ssd + public ip "
+                      f"-> {name} + {disk}GB pd-balanced + ip (${extra:.2f}). transfer allowance not included on gcp")
+    _set(line, f"{name} + {disk}GB pd-balanced", "close", "vm",
+         family="e2", vcpu=mvcpu, ram=mram, custom=custom, hours=hours, uptime=1.0,
+         windows=False, license_vcpu=vcpu, spot=False, extra_monthly=extra)
+
+
+def _lightsail_container(line, data, ctx):
+    line.note("twin", "lightsail container service -> cloud run, pricing too different, aws cost copied")
+    _set(line, "Cloud Run", "assumed", "same_as_aws")
+
 HANDLERS = {
     "vm": _vm, "vm_cpu_credits": _vm_cpu_credits,
     "disk": _disk, "disk_perf": _disk_perf, "snapshot": _snapshot,
@@ -273,5 +303,6 @@ HANDLERS = {
     "lb_hours": _lb_hours, "lb_lcu": _lb_lcu, "lb_bytes": _lb_bytes,
     "k8s_cluster": _k8s_cluster, "k8s_extended_support": _k8s_extended,
     "dns_zone": _dns_zone, "managed": _managed, "support": _support,
+    "lightsail_vm": _lightsail_vm, "lightsail_container": _lightsail_container,
     "marketplace": _human, "unknown": _human,
 }

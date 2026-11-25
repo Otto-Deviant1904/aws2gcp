@@ -26,6 +26,7 @@ ROWS = [
      {"product/operatingSystem": "Windows"}),
     ("Usage", "AmazonEC2", "APS3-SpotUsage:m5.xlarge", "RunInstances:SV001", "i-spot1", 200, 14.00, {}),
     ("Usage", "AmazonEC2", "APS3-CPUCredits:t3", "RunInstances", "i-web1", 30, 1.50, {}),
+    ("Usage", "AmazonLightsail", "APS3-BundleUsage:4GB", "", "ls-blog", 720, 23.22, {}),
     ("Usage", "AmazonEC2", "APS3-BoxUsage:g4dn.xlarge", "RunInstances", "i-gpu1", 100, 57.90, {}),
     ("Usage", "AmazonEC2", "APS3-EBS:VolumeUsage.gp3", "CreateVolume-Gp3", "vol-1", 500, 45.60, {}),
     ("Usage", "AmazonEC2", "APS3-EBS:VolumeP-IOPS.gp3", "CreateVolume-Gp3", "vol-1", 2000, 11.40, {}),

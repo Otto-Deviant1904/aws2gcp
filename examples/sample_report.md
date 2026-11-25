@@ -11,21 +11,21 @@ Prices: GCP asia-south1, snapshot 2026-11-23, verified: False. All amounts USD p
 
 | | Monthly |
 |---|---|
-| AWS today (after RI/SP discounts, before credits) | $1,593.69 |
-| AWS at list price (no discounts) | $1,653.73 |
-| AWS if cleaned up first (rough, -15%) | $1,354.64 |
-| GCP estimate | $1,388.24 ($1,111.29 .. $1,664.06) |
-| Monthly saving (likely) | $205.45 (13% of AWS) |
+| AWS today (after RI/SP discounts, before credits) | $1,617.23 |
+| AWS at list price (no discounts) | $1,677.28 |
+| AWS if cleaned up first (rough, -15%) | $1,374.65 |
+| GCP estimate | $1,428.73 ($1,143.56 .. $1,712.77) |
+| Monthly saving (likely) | $188.50 (12% of AWS) |
 
-One-time moving cost: $10,753.97 ($7,527.78 .. $13,980.16)
+One-time moving cost: $10,914.47 ($7,640.13 .. $14,188.81)
 
-Break-even: likely 52.3 months; best case 15.6 months; worst case never (GCP is not cheaper).
+Break-even: likely 57.9 months; best case 16.1 months; worst case never (GCP is not cheaper).
 
 Note: AWS credits paid $202.78 this month. Real spend before credits is the AWS figure above.
 
 ## How much to trust this
 
-Share of the AWS bill matched: exact 32%, close 49%, assumed 8%, needs a human 10%.
+Share of the AWS bill matched: exact 32%, close 50%, assumed 8%, needs a human 10%.
 
 - exact: same product and shape (+/- 5%)
 - close: same job, different shape or pricing rules (+/- 20%)
@@ -45,11 +45,11 @@ Share of the AWS bill matched: exact 32%, close 49%, assumed 8%, needs a human 1
 | Group | AWS | GCP likely | GCP range |
 |---|---:|---:|---|
 | database | $558.55 | $463.49 | $415.54 .. $511.43 |
-| compute | $353.91 | $425.81 | $325.93 .. $520.91 |
+| compute | $377.45 | $465.13 | $357.38 .. $568.09 |
 | network | $236.87 | $199.08 | $160.10 .. $238.07 |
 | storage | $142.96 | $133.02 | $113.41 .. $152.63 |
 | human | $102.91 | $102.91 | $51.45 .. $154.36 |
-| support | $101.39 | $40.43 | $28.30 .. $52.56 |
+| support | $101.39 | $41.61 | $29.13 .. $54.10 |
 | kubernetes | $73.00 | $0.00 | $0.00 .. $3.65 |
 | managed | $23.09 | $23.09 | $16.16 .. $30.01 |
 | dns | $1.01 | $0.41 | $0.39 .. $0.43 |
@@ -61,7 +61,7 @@ Share of the AWS bill matched: exact 32%, close 49%, assumed 8%, needs a human 1
 | $270.10 | $222.50 | exact | `APS3-Multi-AZUsage:db.m5.large` | Cloud SQL PostgreSQL 2 vCPU / 8 GB HA |
 | $211.70 | $156.22 | close | `APS3-InstanceUsage:db.r6g.large` | Cloud SQL PostgreSQL 2 vCPU / 16 GB |
 | $110.82 | $121.67 | close | `APS3-DataTransfer-Out-Bytes` | internet egress (premium) |
-| $101.39 | $40.43 | assumed | `Dollar` | Google Cloud Customer Care |
+| $101.39 | $41.61 | assumed | `Dollar` | Google Cloud Customer Care |
 | $100.38 | $100.38 | human | `SoftwareUsage:standard` | needs a human |
 | $86.18 | $108.67 | close | `APS3-BoxUsage:c5.xlarge` | n2-custom-4-8192 |
 | $80.89 | $120.89 | close | `APS3-BoxUsage:t3.large` | e2-standard-2 |
@@ -75,6 +75,7 @@ Share of the AWS bill matched: exact 32%, close 49%, assumed 8%, needs a human 1
 | $32.71 | $26.86 | close | `APS3-BoxUsage:t3.medium` | e2-medium |
 | $28.39 | $22.81 | close | `APS3-NatGateway-Bytes` | Cloud NAT data processing |
 | $28.10 | $34.89 | close | `APS3-BoxUsage:m6g.large` | c4a-standard-2 |
+| $23.54 | $39.31 | close | `APS3-BundleUsage:4GB` | e2-medium + 80GB pd-balanced |
 | $20.38 | $20.38 | assumed | `APS3-DataProcessing-Bytes` | Cloud Logging + Cloud Monitoring |
 | $20.28 | $10.14 | close | `APS3-DataTransfer-Regional-Bytes` | inter-zone traffic |
 | $17.45 | $18.25 | close | `APS3-LoadBalancerUsage` | Cloud Load Balancing forwarding rule |
@@ -82,7 +83,6 @@ Share of the AWS bill matched: exact 32%, close 49%, assumed 8%, needs a human 1
 | $14.19 | $13.04 | close | `APS3-SpotUsage:m5.xlarge` | n2-standard-4 |
 | $11.56 | $0.00 | close | `APS3-EBS:VolumeP-IOPS.gp3` | included in Persistent Disk size |
 | $11.15 | $0.00 | close | `APS3-Aurora:StorageIOUsage` | no I/O charge on Cloud SQL |
-| $10.95 | $10.95 | exact | `APS3-PublicIPv4:InUseAddress` | external IPv4 address |
 
 Run `aws2gcp explain <bill> --match <text>` to see how any line was decided.
 
@@ -92,10 +92,10 @@ Run `aws2gcp explain <bill> --match <text>` to see how any line was decided.
 |---|---:|---|
 | Data egress out of AWS | $702.62 | 7,807 GB x $0.09/GB |
 | Reading back archived S3 data | $101.39 | 5,069 GB x $0.02/GB |
-| Engineering labor | $7,980.00 | 266 h x $30/h (base 80 h, 6 compute x 4 h, 2 database x 16 h, 1 dns x 2 h, 1 kubernetes x 40 h, 2 managed x 8 h, 5 network x 4 h, 4 storage x 1 h, 3 needs-a-human x 16 h) |
-| Running both clouds (overlap) | $1,388.24 | 1 month(s) of GCP while AWS still runs |
+| Engineering labor | $8,100.00 | 270 h x $30/h (base 80 h, 7 compute x 4 h, 2 database x 16 h, 1 dns x 2 h, 1 kubernetes x 40 h, 2 managed x 8 h, 5 network x 4 h, 4 storage x 1 h, 3 needs-a-human x 16 h) |
+| Running both clouds (overlap) | $1,428.73 | 1 month(s) of GCP while AWS still runs |
 | Unused AWS commitments after move | $581.72 | monthly fee x months left after the move |
-| **Total (likely)** | **$10,753.97** | range $7,527.78 .. $13,980.16 |
+| **Total (likely)** | **$10,914.47** | range $7,640.13 .. $14,188.81 |
 
 ## Money not in the comparison
 
@@ -106,9 +106,9 @@ Run `aws2gcp explain <bill> --match <text>` to see how any line was decided.
 | refund | -$10.14 | refunds |
 | sp_negation | -$73.73 | Savings Plan cancel-out rows (ignored on purpose) |
 | tax | $152.08 | GST / tax; GCP charges tax too, so it is left out |
-| workload | $1,529.63 | usage that was compared above (row cost, before RI/SP effective cost) |
+| workload | $1,553.18 | usage that was compared above (row cost, before RI/SP effective cost) |
 
-Reconciliation: buckets add up to the bill total $1,635.96 (OK).
+Reconciliation: buckets add up to the bill total $1,659.18 (OK).
 
 ## Assumptions
 

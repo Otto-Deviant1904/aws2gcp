@@ -112,6 +112,10 @@ class TwinFinder(unittest.TestCase):
         for u in ("APS3-BoxUsage:g4dn.xlarge", "SoftwareUsage:standard", "APS3-Notebk:ml.t3.medium"):
             self.assertEqual(self.twin(u)[1], "human", u)
 
+    def test_lightsail_bundle_is_vm_plus_disk(self):
+        l = line(self.r, "APS3-BundleUsage:4GB")
+        self.assertEqual((l.twin, l.confidence), ("e2-medium + 80GB pd-balanced", "close"))
+
     def test_aurora_is_close_not_exact(self):
         self.assertEqual(self.twin("APS3-InstanceUsage:db.r6g.large")[1], "close")
 

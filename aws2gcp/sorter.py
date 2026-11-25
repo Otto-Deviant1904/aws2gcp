@@ -2,7 +2,7 @@
 import re
 
 GROUP_OF_KIND = {
-    "vm": "compute", "vm_cpu_credits": "compute",
+    "vm": "compute", "vm_cpu_credits": "compute", "lightsail_vm": "compute", "lightsail_container": "compute",
     "disk": "storage", "disk_perf": "storage", "snapshot": "storage",
     "s3_storage": "storage", "s3_requests": "storage", "s3_retrieval": "storage",
     "db_instance": "database", "db_storage": "database", "db_io": "database", "db_backup": "database",
