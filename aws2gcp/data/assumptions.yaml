@@ -40,4 +40,3 @@ migration:
       managed: 8
     hours_per_human_item: 16     # each "needs a human" item
 
-stale_price_days: 60             # warn when prices.yaml is older than this

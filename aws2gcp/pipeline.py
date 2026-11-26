@@ -1,5 +1,4 @@
-from dataclasses import dataclass, field
-from datetime import date
+from dataclasses import dataclass
 
 from . import moving_truck, price_tag, receipt as receipt_mod, sorter, twin_finder
 
@@ -14,15 +13,11 @@ class Result:
     migration: dict
     settings: dict
     prices_meta: dict
-    warnings: list = field(default_factory=list)
 
 
-def run(paths, data: dict, settings: dict, today: date | None = None) -> Result:
+def run(paths, data: dict, settings: dict) -> Result:
     data = dict(data, settings=settings)
-    warnings = []
-
     rec = receipt_mod.read_receipt(paths, settings)
-    warnings += rec.warnings
     lines = rec.usage()
 
     sorter.sort_lines(lines, data)
@@ -37,14 +32,10 @@ def run(paths, data: dict, settings: dict, today: date | None = None) -> Result:
     _support(lines, settings)
 
     totals = _totals(lines, rec, settings)
-    warnings += _price_warnings(lines, data, settings, today or date.today())
-    if totals["commitment_coverage"] > 0 and settings["gcp"]["cud"] == "none":
-        warnings.append(f"{totals['commitment_coverage']:.0%} of AWS spend uses RIs / Savings Plans, but "
-                        "GCP is priced without commitments. For a fair match try --gcp-cud 1y.")
 
     migration = moving_truck.estimate(lines, rec, totals, settings)
 
-    return Result(rec, lines, totals, migration, settings, data["prices"]["meta"], warnings)
+    return Result(rec, lines, totals, migration, settings, data["prices"]["meta"])
 
 
 def _gke_free_cluster(lines, prices, settings):
@@ -94,24 +85,3 @@ def _totals(lines, rec, settings) -> dict:
     t["coverage"] = {c: (v / aws if aws else 0.0) for c, v in t["by_confidence"].items()}
     t["credits_monthly"] = t["buckets_monthly"].get("credit", 0.0)
     return t
-
-
-def _price_warnings(lines, data, settings, today) -> list:
-    out = []
-    meta = data["prices"]["meta"]
-    if not meta.get("verified", False):
-        out.append("GCP prices are an APPROXIMATE snapshot (prices.yaml verified: false). "
-                   "Check them before quoting a client.")
-    snap = meta["snapshot_date"]
-    snap = snap if isinstance(snap, date) else date.fromisoformat(str(snap))
-    age = (today - snap).days
-    if age > settings["stale_price_days"]:
-        out.append(f"prices.yaml is {age} days old; prices may have changed.")
-    to_gcp = data["regions"]["aws_to_gcp_region"]
-    regions = {l.region for l in lines if l.region not in ("", "global")}
-    for r in sorted(regions):
-        gcp_r = to_gcp.get(r, "unknown")
-        if gcp_r != meta["region"]:
-            out.append(f"AWS region {r} maps to GCP {gcp_r}, but prices.yaml only has {meta['region']}; "
-                       f"{meta['region']} prices were used.")
-    return out

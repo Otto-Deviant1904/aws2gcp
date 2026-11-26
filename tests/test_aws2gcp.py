@@ -1,7 +1,6 @@
 import csv
 import tempfile
 import unittest
-from datetime import date
 from pathlib import Path
 
 from aws2gcp import config, pipeline, report_card
@@ -11,7 +10,6 @@ from aws2gcp.sample import COLUMNS, ROWS, write_sample
 from aws2gcp.sorter import parse_instance
 from aws2gcp.twin_finder import pick_machine
 
-TODAY = date(2026, 11, 23)
 
 
 def run(flags=None, **sample_kwargs):
@@ -20,7 +18,7 @@ def run(flags=None, **sample_kwargs):
     write_sample(path, **sample_kwargs)
     data = config.load_all()
     settings = config.apply_flags(data["settings"], flags or {})
-    return pipeline.run([str(path)], data, settings, today=TODAY)
+    return pipeline.run([str(path)], data, settings)
 
 
 def line(result, usage_type):
@@ -48,9 +46,8 @@ class Receipt(unittest.TestCase):
         kinds = {l.line_type for l in run().lines}
         self.assertFalse(kinds & {"Tax", "Credit", "Refund", "Fee", "RIFee", "SavingsPlanNegation"})
 
-    def test_partial_month_is_warned_and_scaled(self):
+    def test_partial_month_is_scaled(self):
         r = run(last_usage="2026-11-15T00:00:00Z")
-        self.assertTrue(any("only has 14.0 of 30 days" in w for w in r.warnings))
         self.assertAlmostEqual(r.lines[0].scale, 730 / (14 * 24))
 
     def test_bills_console_csv_is_rejected_clearly(self):
@@ -59,7 +56,7 @@ class Receipt(unittest.TestCase):
             csv.writer(fh).writerows([["Service", "Region", "Cost"], ["EC2", "Mumbai", "10"]])
         data = config.load_all()
         with self.assertRaisesRegex(ReceiptError, "does not look like a Cost and Usage Report"):
-            pipeline.run([str(tmp)], data, data["settings"], today=TODAY)
+            pipeline.run([str(tmp)], data, data["settings"])
 
 
     def test_only_newest_delivery_of_a_month_is_read(self):
@@ -69,7 +66,7 @@ class Receipt(unittest.TestCase):
             write_sample(root / stamp / "Knight-00001.csv")
         once = run().totals["aws_monthly"]
         data = config.load_all()
-        r = pipeline.run([str(root.parent.parent)], data, data["settings"], today=TODAY)
+        r = pipeline.run([str(root.parent.parent)], data, data["settings"])
         self.assertAlmostEqual(r.totals["aws_monthly"], once, places=2)
 
     def test_empty_bill_does_not_crash(self):
@@ -77,7 +74,7 @@ class Receipt(unittest.TestCase):
         with open(tmp, "w", newline="") as fh:
             csv.writer(fh).writerow(COLUMNS)
         data = config.load_all()
-        report_card.render(pipeline.run([str(tmp)], data, data["settings"], today=TODAY))
+        report_card.render(pipeline.run([str(tmp)], data, data["settings"]))
 
 
 class Sorter(unittest.TestCase):

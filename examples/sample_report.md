@@ -130,4 +130,3 @@ Reconciliation: buckets add up to the bill total $1,659.18 (OK).
 | migration.labor.base_project_hours | 80 | edit assumptions.yaml |
 | migration.labor.hours_per_resource | {'compute': 4, 'storage': 1, 'database': 16, 'network': 4, 'kubernetes': 40, 'dns': 2, 'managed': 8} | edit assumptions.yaml |
 | migration.labor.hours_per_human_item | 16 | edit assumptions.yaml |
-| stale_price_days | 60 | edit assumptions.yaml |

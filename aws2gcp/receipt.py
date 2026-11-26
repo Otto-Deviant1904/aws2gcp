@@ -1,7 +1,7 @@
 import csv
 import gzip
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
@@ -41,7 +41,6 @@ class Receipt:
     lines: list
     raw_total: float
     periods: dict
-    warnings: list = field(default_factory=list)
 
     def usage(self) -> list:
         return [l for l in self.lines if l.bucket == "usage"]
@@ -119,7 +118,7 @@ def open_text(path: Path):
 
 def read_receipt(paths, settings: dict) -> Receipt:
     fx = settings["fx_to_usd"]
-    lines, raw_total, periods, warnings = [], 0.0, {}, []
+    lines, raw_total, periods = [], 0.0, {}
 
     for path in find_files(paths):
         with open_text(path) as fh:
@@ -150,8 +149,8 @@ def read_receipt(paths, settings: dict) -> Receipt:
                 if usage_end and (p["last_usage"] is None or usage_end > p["last_usage"]):
                     p["last_usage"] = usage_end
 
-    _scale_to_standard_month(lines, periods, settings["hours_per_month"], warnings)
-    receipt = Receipt(lines, raw_total, periods, warnings)
+    _scale_to_standard_month(lines, periods, settings["hours_per_month"])
+    receipt = Receipt(lines, raw_total, periods)
 
     diff = receipt.reconcile()
     if diff > 0.005:
@@ -206,21 +205,13 @@ def _make_line(r: dict, fx: dict, source: str) -> Line:
 
 
 # TODO handle multiple months properly, right now just averages
-def _scale_to_standard_month(lines, periods, hours_per_month, warnings) -> None:
+def _scale_to_standard_month(lines, periods, hours_per_month) -> None:
     n = len(periods)
     for key, p in periods.items():
-        full = (p["end"] - p["start"]).total_seconds() / 3600
         last = min(p["last_usage"] or p["end"], p["end"])
         covered = max((last - p["start"]).total_seconds() / 3600, 1.0)
         p["covered_hours"] = covered
         p["scale"] = hours_per_month / covered / n
-        if covered < full - 24:
-            warnings.append(
-                f"Billing period {key} only has {covered / 24:.1f} of {full / 24:.0f} days of data "
-                "(month not finished?). Costs were stretched to a full month; treat with care."
-            )
-    if n > 1:
-        warnings.append(f"{n} billing periods found; results are the average month.")
     for l in lines:
         l.period_hours = periods[l.period]["covered_hours"]
         l.scale = periods[l.period]["scale"]
